@@ -35,6 +35,7 @@ class Action:
         amount_value=None,
         pot_value=None,
         call_value=None,
+        phase=None,
     ):
         """ """
 
@@ -46,6 +47,7 @@ class Action:
         self.amount_type = amount_type
 
         self.pot_value = -1
+        self.phase = phase
 
         assert name in self.NAME
         if name == "SB":

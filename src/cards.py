@@ -17,6 +17,10 @@ new  :
 from itertools import product
 from src.translate import *
 
+from functools import reduce
+
+from src.cards_utils import *
+
 import random
 import numpy as np
 from pandas import Series
@@ -264,8 +268,10 @@ class Hand:
 
         # colors
         values = Series([i.value for i in self.cards])
+
         # nb cards by value
         val_counts = values.value_counts().to_dict()
+
         # only 5 or more same color
         val_counts = {i: j for i, j in val_counts.items() if j >= 2}
 
@@ -273,7 +279,10 @@ class Hand:
         if not len(val_counts.keys()):
             return None
 
+        # print("find a pair")
+
         for i in val_counts.keys():
+
             comb = Comb("pair", i)
             self.comb_list.append(comb)
 
@@ -282,8 +291,10 @@ class Hand:
 
         # colors
         values = Series([i.value for i in self.cards])
+
         # nb cards by value
         val_counts = values.value_counts().to_dict()
+
         # only 5 or more same color
         val_counts = {i: j for i, j in val_counts.items() if j >= 3}
 
@@ -291,32 +302,83 @@ class Hand:
         if not len(val_counts.keys()):
             return None
 
+        # print("find a three_of_kind")
+
         for i in val_counts.keys():
+
             comb = Comb("three_of_kind", i)
             self.comb_list.append(comb)
 
     def _eval_2_pairs(self):
-        pass
+        """IS OK BUT NOT MAX_VAL.... """
+
+        pairs = [i.value for i in self.comb_list if i.name == "pair"]
+        pairs = sorted(pairs, reverse=True)
+
+        if not (len(pairs) >= 2):
+            return None
+
+        # print("find a 2_pairs")
+
+        pairs = pairs[:2]
+        val = sum(pairs)
+        comb = Comb("2_pairs", val)
+        self.comb_list.append(comb)
 
     def _eval_four_of_kind(self):
-        pass
+        """ is OK"""
+
+        # colors
+        values = Series([i.value for i in self.cards])
+
+        # nb cards by value
+        val_counts = values.value_counts().to_dict()
+
+        # only 5 or more same color
+        val_counts = {i: j for i, j in val_counts.items() if j >= 4}
+
+        # if nothing
+        if not len(val_counts.keys()):
+            return None
+
+        # print("find a four_of_kind")
+
+        for i in val_counts.keys():
+            comb = Comb("four_of_kind", i)
+            self.comb_list.append(comb)
 
     def _eval_straight(self):
-        pass
+        """ IS Ok"""
+
+        values = sorted([i.value for i in self.cards])
+
+        val = is_straight(values)
+
+        if val == -1:
+            return None
+
+        # print("find a straight")
+
+        comb = Comb("straight", val)
+        self.comb_list.append(comb)
 
     def _eval_flush(self):
         """IS OK """
 
         # colors
         colors = Series([i.color for i in self.cards])
+
         # nb cards by color
         val_counts = colors.value_counts().to_dict()
+
         # only 5 or more same color
         val_counts = {i: j for i, j in val_counts.items() if j >= 5}
 
         # if nothing
         if not len(val_counts.keys()):
             return None
+
+        # print("find a flush")
 
         # else there is a flush / color & max val
         color = list(val_counts.keys())[0]
@@ -327,13 +389,48 @@ class Hand:
         self.comb_list.append(comb)
 
     def _eval_full_house(self):
+        """ """
+
+        # flush = [i.value for i in self.comb_list if i.name == "flush"]
+        # straight = [i.value for i in self.comb_list if i.name == "straight"]
+
+        # if flush and straight:
+        #     print("full house found")
+        #     comb = Comb("full_house", 0)
+        #     self.comb_list.append(comb)
+
         pass
 
     def _eval_straight_flush(self):
-        pass
+        """IS OK """
+
+        flush = [i for i in self.comb_list if i.name == "flush"]
+        straight = [i for i in self.comb_list if i.name == "straight"]
+
+        if flush and straight:
+            val = max([i.max_value for i in straight])
+            color = flush[0].color
+
+            # print("straight_flush found")
+
+            comb = Comb("straight_flush", val, color=color)
+            self.comb_list.append(comb)
 
     def _eval_royal_straight_flush(self):
-        pass
+        """IS OK """
+
+        straight_flush = [i for i in self.comb_list if i.name == "straight_flush"]
+
+        if straight_flush:
+
+            val = straight_flush[0].max_value
+            color = straight_flush[0].color
+
+            # if as
+            if val == 14:
+                print("royal_straight_flush found")
+                comb = Comb("royal_straight_flush", val)
+                self.comb_list.append(comb)
 
     def eval_all(self):
         """IL EN MANQUE """
@@ -409,31 +506,37 @@ def compare_hands(hand_list):
     return result
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     from src.cards import *
+    from src.cards import *
 
-#     cards_0 = ["9tr", "8pi", "7co", "6co", "5tr"]
+    L = list()
+    L.append(["ttr", "8pi", "7co", "6co", "2tr"])  # High_card
+    L.append(["9tr", "9pi", "7co", "6co", "2tr"])  # Pair
+    L.append(["9tr", "9ca", "api", "aca", "3ca"])  # 2 pairs
+    L.append(["9tr", "9pi", "9co", "6co", "5tr"])  # three_of_kind
 
-#     cards_1 = ["ttr", "8tr", "7tr", "6tr", "2tr"]
+    L.append(["6tr", "5pi", "4co", "3co", "2tr"])  # straight
+    L.append(["ttr", "8tr", "7tr", "6tr", "2tr"])  # Flush
+    # full_house
+    L.append(["9tr", "9ca", "9pi", "9co", "3ca"])  # four_of_kind
+    L.append(["6tr", "5tr", "4tr", "3tr", "2tr"])  # straight_flush
+    L.append(["atr", "ktr", "qtr", "jtr", "ttr"])  # straight_flush
 
-#     cards_2 = ["9tr", "9ca", "api", "aca"]
+    hand_list = list()
+    for cards in L:
 
-#     cards_3 = ["atr", "8tr", "7tr", "6tr", "5tr", "5ca", "5co"]
+        objs = [Card(i) for i in cards]
+        hand = Hand(*objs)
+        hand_list.append(hand)
 
-#     hand_list = list()
-#     for cards in [cards_0, cards_1, cards_2, cards_3]:
+        # print(hand.comb_list)
+        print(cards)
+        print(hand.best_comb)
+        print("\n")
 
-#         objs = [Card(i) for i in cards]
-#         hand = Hand(*objs)
-#         hand_list.append(hand)
+        # li = [(i, v.best_comb) for i, v in enumerate(hand_list)]
+        # print(li)
 
-#         print(hand.comb_list)
-#         print(hand.best_comb)
-#         print("\n\n\n")
-
-#         li = [(i, v.best_comb) for i, v in enumerate(hand_list)]
-#         print(li)
-
-#         winer = compare_hands(hand_list)
-#         print(winer)
+        # winer = compare_hands(hand_list)
+        # print(winer)

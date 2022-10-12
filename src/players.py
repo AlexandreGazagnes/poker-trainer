@@ -53,7 +53,7 @@ class Player:
         self.bet_strat = choice(self.BET_STRAT) if not bet_strat else bet_strat
 
         # self.actions_all = {"preflop": [], "flop": [], "turn": [], "river": []}
-        self.current_round_actions = {"preflop": [], "flop": [], "turn": [], "river": []}
+        self.current_round_actions = []
 
         self.is_at_table = 1
         self.is_in_round = 1
@@ -62,11 +62,11 @@ class Player:
         self.current_bb_bet = 0
         self.total_bb_bet = 0
 
-    def make_action(self, categ, action):
+    def make_action(self, action):
         """ """
 
         # self.actions_all[categ].append(action)
-        self.current_round_actions[categ].append(action)
+        self.current_round_actions.append(action)
         self.current_stack -= action.bb_amount
         self.current_bb_bet += action.bb_amount
         self.total_bb_bet += action.bb_amount
@@ -89,8 +89,6 @@ class Player:
         self.current_pos_order = current_pos_order
         self.current_pos_name = current_pos_name
         self.current_pos_categ = current_pos_categ
-
-        self.current_round_actions = {"preflop": [], "flop": [], "turn": [], "river": []}
 
     def win_round(self):
         pass
